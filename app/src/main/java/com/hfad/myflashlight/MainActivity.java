@@ -1,40 +1,46 @@
 package com.hfad.myflashlight;
 
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
-
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.content.DialogInterface;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Camera;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraManager;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.CompoundButton;
-import android.widget.Switch;
+import android.widget.ImageView;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 
 import java.security.Policy;
 
+@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadCompleteListener {
 
     private int sound;
     private SoundPool soundPool;
     private Camera camera;
+    private CameraManager cameraManager;
     Policy.Parameters parameters;
     private SwitchCompat switchCompat;
+    private Context context;
+    private boolean flash_status = true;
 
+    private ImageView imageViewChange;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         getSupportActionBar().hide();
-
+        imageViewChange = findViewById(R.id.imageView4);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             createSoundPoolWithBuilder();
         } else {
@@ -49,6 +55,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
         switchCompat = findViewById(R.id.switch_compat);
         switchCompat.setOnCheckedChangeListener(
                 new CompoundButton.OnCheckedChangeListener() {
+                    @RequiresApi(api = Build.VERSION_CODES.M)
                     @Override
                     public void onCheckedChanged(CompoundButton compoundButton,
                                                  boolean b) {
@@ -85,12 +92,49 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
         soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void setFlashLightOff() {
+        imageViewChange.setImageResource(R.drawable.off);
         soundPool.play(sound, 1, 1, 0, 0, 1);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                cameraManager = (CameraManager) getApplicationContext().getSystemService(Context.CAMERA_SERVICE);
+                if (cameraManager != null) {
+                    String cameraId = null;
+                    try {
+                        cameraId = cameraManager.getCameraIdList()[0];
+                        flash_status = false;
+                        cameraManager.setTorchMode(cameraId,flash_status);
+                    } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void setFlashLigthOn() {
+        imageViewChange.setImageResource(R.drawable.on);
         soundPool.play(sound, 1, 1, 0, 0, 1);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                cameraManager = (CameraManager) getApplicationContext().getSystemService(Context.CAMERA_SERVICE);
+                if (cameraManager != null) {
+                    String cameraId = null;
+                    try {
+                        cameraId = cameraManager.getCameraIdList()[0];
+                        flash_status = true;
+                        cameraManager.setTorchMode(cameraId,flash_status);
+                    } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
     }
 
 
