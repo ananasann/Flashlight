@@ -1,10 +1,13 @@
 package com.hfad.myflashlight;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.graphics.Camera;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -32,7 +35,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
         setContentView(R.layout.activity_main);
         getSupportActionBar().hide();
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             createSoundPoolWithBuilder();
         } else {
             createSoundPoolWithConstructor();
@@ -41,24 +44,31 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
         soundPool.setOnLoadCompleteListener(this);
         sound = soundPool.load(this, R.raw.click, 1);
 
+        boolean isCameraFlash = getApplicationContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
         switchCompat = findViewById(R.id.switch_compat);
         switchCompat.setOnCheckedChangeListener(
                 new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton compoundButton,
                                                  boolean b) {
-                        if (switchCompat.isChecked()) {
-                            setFlashLigthOn();
+                        if (isCameraFlash) {
+                            if (switchCompat.isChecked())
+                                setFlashLigthOn();
+                            else
+                                setFlashLightOff();
                         } else {
-                            setFlashLightOff();
+                            Toast.makeText(MainActivity.this, "No flash available on your device",
+                                    Toast.LENGTH_SHORT).show();
                         }
-
-                        Toast.makeText(getApplicationContext(),"Switch is " + (switchCompat.isChecked() ? "On" : "Off"),Toast.LENGTH_SHORT).show();
                     }
-                });
+                }
+        );
+
 
 
     }
+
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     protected void createSoundPoolWithBuilder() {
@@ -82,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
     private void setFlashLigthOn() {
         soundPool.play(sound, 1, 1, 0, 0, 1);
     }
-
 
 
     @Override
