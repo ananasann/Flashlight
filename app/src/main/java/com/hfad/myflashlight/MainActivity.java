@@ -11,6 +11,7 @@ import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -35,6 +36,9 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
 
     private ImageView imageViewChange;
     private ImageView strobe;
+    int freq = 5;
+
+    private boolean strobOnOff = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
                         if (isCameraFlash) {
                             if (switchCompat.isChecked())
                                 setFlashLigthOn();
+
                             else
                                 setFlashLightOff();
                         } else {
@@ -73,6 +78,73 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
                     }
                 }
         );
+        strobe.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void onClick(View v) {
+                if (isCameraFlash && switchCompat.isChecked()) {
+                    if (strobOnOff == false){
+                        strobeOn();
+                        strobOnOff = true;
+                    }
+                    else{
+                        strobeOff();
+                        strobOnOff = false;
+                    }
+
+                }
+            }
+        });
+    }
+
+    private void strobeOn() {
+        new Thread(new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void run() {
+                cameraManager = (CameraManager) getApplicationContext().getSystemService(Context.CAMERA_SERVICE);
+                if (cameraManager != null) {
+                    String cameraId = null;
+                    try {
+                        cameraId = cameraManager.getCameraIdList()[0];
+                        while (!flash_status && strobOnOff == true) {
+                            cameraManager.setTorchMode(cameraId, flash_status);
+                            flash_status = false;
+                            Thread.sleep(100 - freq);
+                            cameraManager.setTorchMode(cameraId, flash_status);
+                            flash_status = false;
+                            Thread.sleep(freq);
+                        }
+                    } catch (CameraAccessException | InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+        Toast.makeText(MainActivity.this, "Стробоскоп включен",
+                Toast.LENGTH_SHORT).show();
+    }
+
+    private void strobeOff() {
+        new Thread(new Runnable() {
+            @RequiresApi(api = Build.VERSION_CODES.M)
+            @Override
+            public void run() {
+                cameraManager = (CameraManager) getApplicationContext().getSystemService(Context.CAMERA_SERVICE);
+                if (cameraManager != null) {
+                    String cameraId = null;
+                    try {
+                        cameraId = cameraManager.getCameraIdList()[0];
+                        flash_status = true;
+                        cameraManager.setTorchMode(cameraId, flash_status);
+                    } catch (CameraAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }).start();
+        Toast.makeText(MainActivity.this, "Стробоскоп выключен",
+                Toast.LENGTH_SHORT).show();
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
