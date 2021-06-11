@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
     private boolean flash_status = true;
 
     private ImageView imageViewChange;
+    private ImageView strobe;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
         setContentView(R.layout.activity_main);
         getSupportActionBar().hide();
         imageViewChange = findViewById(R.id.imageView4);
+        strobe = findViewById(R.id.strobe);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             createSoundPoolWithBuilder();
         } else {
@@ -71,11 +73,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
                     }
                 }
         );
-
-
-
     }
-
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     protected void createSoundPoolWithBuilder() {
@@ -96,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
     private void setFlashLightOff() {
         imageViewChange.setImageResource(R.drawable.off);
         soundPool.play(sound, 1, 1, 0, 0, 1);
+        strobe.setImageResource(R.drawable.clear);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -105,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
                     try {
                         cameraId = cameraManager.getCameraIdList()[0];
                         flash_status = false;
-                        cameraManager.setTorchMode(cameraId,flash_status);
+                        cameraManager.setTorchMode(cameraId, flash_status);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
@@ -118,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
     private void setFlashLigthOn() {
         imageViewChange.setImageResource(R.drawable.on);
         soundPool.play(sound, 1, 1, 0, 0, 1);
-
+        strobe.setImageResource(R.drawable.ic_str);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -128,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
                     try {
                         cameraId = cameraManager.getCameraIdList()[0];
                         flash_status = true;
-                        cameraManager.setTorchMode(cameraId,flash_status);
+                        cameraManager.setTorchMode(cameraId, flash_status);
                     } catch (CameraAccessException e) {
                         e.printStackTrace();
                     }
