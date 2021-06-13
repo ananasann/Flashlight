@@ -94,9 +94,6 @@ public class FlashClass {
         }
     }
 
-    public boolean isFlash_status() {
-        return flash_status;
-    }
 
     public boolean isStrobStatusOn() {
         return strob_status;

@@ -90,14 +90,11 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View v) {
-                    Log.d("taaag", "blya: ");
                     soundPool.play(sound, 1, 1, 0, 0, 1);
                     if (flashClass.isStrobStatusOn()) {
                         flashClass.strobeOff();
-                        Log.d("taaag", "vikl: ");
                     } else {
                         flashClass.strobeOn();
-                        Log.d("taaag", "vkl: ");
                     }
             }
         });
