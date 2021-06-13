@@ -11,6 +11,7 @@ import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -30,12 +31,10 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
     private CameraManager cameraManager;
     private SwitchCompat switchCompat;
     private Context context;
-
+    private FlashClass flashClass;
     private ImageView imageViewChange;
     private ImageView strobe;
-    int freq = 5;
 
-    private boolean strob_status = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,9 +52,15 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
         soundPool.setOnLoadCompleteListener(this);
         sound = soundPool.load(this, R.raw.click, 1);
 
+        init();
+
+    }
+
+    private void init() {
         boolean isCameraFlash = getApplicationContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
         switchCompat = findViewById(R.id.switch_compat);
+        flashClass = new FlashClass(this);
         switchCompat.setOnCheckedChangeListener(
                 new CompoundButton.OnCheckedChangeListener() {
                     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -64,14 +69,16 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
                                                  boolean b) {
                         if (isCameraFlash) {
                             soundPool.play(sound, 1, 1, 0, 0, 1);
-                            if (switchCompat.isChecked()){
+                            if (switchCompat.isChecked()) {
                                 imageViewChange.setImageResource(R.drawable.on);
                                 strobe.setImageResource(R.drawable.ic_str);
-                                setFlashLightOn();}
-                            else{
+                                flashClass.setFlashLightOn();
+
+                            } else {
                                 imageViewChange.setImageResource(R.drawable.off);
                                 strobe.setImageDrawable(null);
-                            setFlashLightOff(); }
+                                flashClass.setFlashLightOff();
+                            }
                         } else {
                             Toast.makeText(MainActivity.this, "No flash available on your device",
                                     Toast.LENGTH_SHORT).show();
@@ -83,48 +90,18 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             public void onClick(View v) {
-                if (isCameraFlash && switchCompat.isChecked()) {
+                    Log.d("taaag", "blya: ");
                     soundPool.play(sound, 1, 1, 0, 0, 1);
-                    if (!strob_status) {
-                        strobeOn();
-                        strob_status = true;
+                    if (flashClass.isStrobStatusOn()) {
+                        flashClass.strobeOff();
+                        Log.d("taaag", "vikl: ");
                     } else {
-                        setFlashLightOn();
-                        strob_status = false;
+                        flashClass.strobeOn();
+                        Log.d("taaag", "vkl: ");
                     }
-
-                }
             }
         });
     }
-
-    private void strobeOn() {
-        new Thread(new Runnable() {
-            @RequiresApi(api = Build.VERSION_CODES.M)
-            @Override
-            public void run() {
-                cameraManager = (CameraManager) getApplicationContext().getSystemService(Context.CAMERA_SERVICE);
-                if (cameraManager != null) {
-                    String cameraId = null;
-                    try {
-                        cameraId = cameraManager.getCameraIdList()[0];
-                        do{
-                            cameraManager.setTorchMode(cameraId, true);
-                            Thread.sleep(100 - freq);
-                            cameraManager.setTorchMode(cameraId, false);
-                            Thread.sleep(freq);
-                        }
-                        while (strob_status = true);
-                    } catch (CameraAccessException | InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
-        Toast.makeText(MainActivity.this, "Стробоскоп включен",
-                Toast.LENGTH_SHORT).show();
-    }
-
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     protected void createSoundPoolWithBuilder() {
@@ -141,44 +118,7 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
         soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, 0);
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void setFlashLightOff() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                cameraManager = (CameraManager) getApplicationContext().getSystemService(Context.CAMERA_SERVICE);
-                if (cameraManager != null) {
-                    String cameraId = null;
-                    try {
-                        cameraId = cameraManager.getCameraIdList()[0];
-                        cameraManager.setTorchMode(cameraId, false);
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
-    }
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    private void setFlashLightOn() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                cameraManager = (CameraManager) getApplicationContext().getSystemService(Context.CAMERA_SERVICE);
-                if (cameraManager != null) {
-                    String cameraId = null;
-                    try {
-                        cameraId = cameraManager.getCameraIdList()[0];
-                        cameraManager.setTorchMode(cameraId, false);
-                        cameraManager.setTorchMode(cameraId, true);
-                    } catch (CameraAccessException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }).start();
-    }
 
 
     @Override
@@ -190,4 +130,5 @@ public class MainActivity extends AppCompatActivity implements SoundPool.OnLoadC
     public void onPointerCaptureChanged(boolean hasCapture) {
 
     }
+
 }
